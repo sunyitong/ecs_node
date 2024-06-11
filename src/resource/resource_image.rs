@@ -1,0 +1,1 @@
+pub const IMAGE_TEST: &'static [u8] = include_bytes!("logo-rgb888-24bpp.bmp");
