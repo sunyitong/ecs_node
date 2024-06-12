@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use crate::core::display_mock::Display;
+#[cfg(all(target_os = "linux", target_arch = "arm"))]
+use crate::core::display_arm::Display;
+#[cfg(windows)]
+use crate::core::display_mock::*;
 use crate::core::display_style::TILE_MAP_STYLE_TEST;
 use crate::core::display_trait::DisplayDraw;
 use crate::platform::platform_data::TILE_MAP_DIMENSION;
