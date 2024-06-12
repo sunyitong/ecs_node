@@ -10,6 +10,9 @@ use tinybmp::Bmp;
 pub static LINE_STYLE_TEST: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
     .stroke_color(Rgb888::WHITE).stroke_width(1).build();
 
+pub static TILE_MAP_STYLE_TEST: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
+    .stroke_color(Rgb888::new(40,40,40)).stroke_width(1).build();
+
 pub static RECT_STYLE_TEST: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
     .stroke_color(Rgb888::RED).stroke_width(5).fill_color(Rgb888::GREEN).build();
 

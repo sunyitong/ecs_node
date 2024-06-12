@@ -2,8 +2,12 @@ mod core;
 mod resource;
 mod plugins;
 mod platform;
+mod systems;
+mod components;
 
-// use crate::core::display_arm::Display;
+#[cfg(all(target_os = "linux", target_arch = "arm"))]
+use crate::core::display_arm::Display;
+#[cfg(windows)]
 use crate::core::display_mock::*;
 use crate::core::display_trait::*;
 use crate::core::display_style::*;
@@ -12,7 +16,8 @@ use crate::resource::resource_image::*;
 use bevy::{app::ScheduleRunnerPlugin, prelude::*, utils::Duration};
 use crate::plugins::fps_check::FpsCheck;
 use crate::plugins::plugin_display::PluginDisplay;
-
+use crate::systems::system_node::{draw_test_node, spawn_test_node, update_test_node};
+use crate::systems::system_tilemap::draw_tile_map;
 
 fn main() {
     // let mut display = Display::new(480,480,4);
@@ -37,28 +42,7 @@ fn main() {
             ))),
         )
         .add_plugins((PluginDisplay, FpsCheck))
-        .insert_resource(TextPosition{coordinate: (0,0)})
-        .add_systems(Update, ( read_display))
+        .add_systems(Startup, spawn_test_node)
+        .add_systems(Update, (draw_tile_map, update_test_node, draw_test_node).chain())
         .run();
-}
-
-#[derive(Resource)]
-struct TextPosition {
-    coordinate: (i32, i32)
-}
-
-fn read_display(
-    mut display: NonSendMut<Display>,
-    mut position: ResMut<TextPosition>
-){
-    display.clean();
-    display.draw_text("From Bevy", position.coordinate.0, position.coordinate.1, TEXT_STYLE_LARGE);
-    display.update();
-    if position.coordinate.0 <= 480 {
-        position.coordinate.0 += 1;
-        position.coordinate.1 += 1;
-    } else {
-        position.coordinate.0 = 0;
-        position.coordinate.1 = 0;
-    }
 }

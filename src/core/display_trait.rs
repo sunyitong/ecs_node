@@ -10,6 +10,8 @@ pub trait DisplayDraw {
     fn draw_circle(&mut self, corner_x:i32, corner_y:i32, diameter:u32, style:PrimitiveStyle<Rgb888>);
     fn draw_triangle(&mut self, p1_x:i32, p1_y:i32, p2_x:i32, p2_y:i32, p3_x:i32, p3_y:i32, style:PrimitiveStyle<Rgb888>);
     fn draw_text(&mut self, t:&str, start_x:i32, start_y:i32, style:MonoTextStyle<Rgb888>);
+    fn draw_text_right(&mut self, t: &str, start_x: i32, start_y: i32, style: MonoTextStyle<Rgb888>);
+    fn draw_text_center(&mut self, t: &str, start_x: i32, start_y: i32, style: MonoTextStyle<Rgb888>);
     fn draw_image_bmp(&mut self, start_x:i32, start_y:i32, bytes: &[u8]);
 }
 

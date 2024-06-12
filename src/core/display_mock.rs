@@ -3,7 +3,7 @@ pub use embedded_graphics::{
     pixelcolor::{Rgb888},
     geometry::Size,
     mono_font:: MonoTextStyle,
-    text::Text,
+    text::{Text, Alignment},
     image::Image,
 };
 use minifb::{Window, WindowOptions};
@@ -122,6 +122,14 @@ impl DisplayDraw for Display{
 
     fn draw_text(&mut self, t: &str, start_x: i32, start_y: i32, style: MonoTextStyle<Rgb888>) {
         Text::new(t, Point::new(start_x, start_y), style).draw(self).unwrap();
+    }
+    
+    fn draw_text_right(&mut self, t: &str, start_x: i32, start_y: i32, style: MonoTextStyle<Rgb888>) {
+        Text::with_alignment(t,Point::new(start_x, start_y), style, Alignment::Right).draw(self).unwrap();
+    }
+
+    fn draw_text_center(&mut self, t: &str, start_x: i32, start_y: i32, style: MonoTextStyle<Rgb888>) {
+        Text::with_alignment(t,Point::new(start_x, start_y), style, Alignment::Center).draw(self).unwrap();
     }
 
     fn draw_image_bmp(&mut self, start_x: i32, start_y: i32, bytes: &[u8]) {

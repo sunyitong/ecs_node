@@ -12,6 +12,7 @@ use framebuffer::Framebuffer;
 use embedded_graphics::{
     primitives::{Rectangle, RoundedRectangle, Line, Circle, Triangle, PrimitiveStyle},
 };
+use embedded_graphics::text::Alignment;
 
 use tinybmp::Bmp;
 
@@ -102,6 +103,14 @@ impl DisplayDraw for Display {
 
     fn draw_text(&mut self, t: &str, start_x: i32, start_y: i32, style: MonoTextStyle<Rgb888>) {
         Text::new(t, Point::new(start_x, start_y), style).draw(self).unwrap();
+    }
+
+    fn draw_text_right(&mut self, t: &str, start_x: i32, start_y: i32, style: MonoTextStyle<Rgb888>) {
+        Text::with_alignment(t,Point::new(start_x, start_y), style, Alignment::Right).draw(self).unwrap();
+    }
+
+    fn draw_text_center(&mut self, t: &str, start_x: i32, start_y: i32, style: MonoTextStyle<Rgb888>) {
+        Text::with_alignment(t,Point::new(start_x, start_y), style, Alignment::Center).draw(self).unwrap();
     }
 
     fn draw_image_bmp(&mut self, start_x: i32, start_y: i32, bytes: &[u8]) {
