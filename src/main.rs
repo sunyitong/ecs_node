@@ -45,9 +45,9 @@ fn main() {
         .insert_resource(GlobalScaleFactor(4))
         // .insert_resource(NodePriorityList(BTreeMap::new()))
         // .add_systems(Startup, spawn_test_node)
-        .add_systems(Startup, spawn_node_add)
+        .add_systems(Startup, (spawn_node_add, spwan_connection))
         // .add_systems(Update, (draw_tile_map, update_test_node, draw_test_node).chain())
-        .add_systems(Update, (draw_global_axis, draw_node, draw_focus_point, zoom_canvas).chain())
+        .add_systems(Update, (draw_global_axis, draw_connection, draw_node, draw_focus_point, zoom_canvas).chain())
         .add_systems(Update, move_focus_point)
         .add_systems(PostUpdate, debug_info)
         .run();
