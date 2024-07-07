@@ -23,6 +23,8 @@ fn main() {
         .add_plugins(PluginInput)
         .insert_resource(GlobalPointerPosition((0,0)))
         .insert_resource(GlobalScaleFactor(4))
+        .insert_resource(FocusPointStatus::default())
+        .insert_resource(FpsInfo::default())
         // .insert_resource(NodePriorityList(BTreeMap::new()))
         // .add_systems(Startup, spawn_test_node)
         .add_systems(Startup, (spawn_node_add, spwan_connection))
@@ -32,4 +34,3 @@ fn main() {
         .add_systems(PostUpdate, debug_info)
         .run();
 }
-

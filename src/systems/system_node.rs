@@ -10,6 +10,7 @@ use crate::core::display_style::*;
 use crate::core::display_trait::DisplayDraw;
 use crate::platform::platform_data::*;
 use crate::resource::resource_global::{GlobalPointerPosition, GlobalScaleFactor};
+use crate::FocusPointStatus;
 
 
 #[derive(Bundle)]
@@ -80,6 +81,14 @@ pub fn spawn_node_add (
         port_input: PortInput(vec![(0.0), (0.0)]),
         port_output: PortOutput(vec![(0.0)]),
     });
+
+    commands.spawn(NodeAdd{
+        node_id: NodeId(3),
+        node_name: NodeName(String::from("ADD")),
+        position: Position((-50,25)),
+        port_input: PortInput(vec![(0.0), (0.0)]),
+        port_output: PortOutput(vec![(0.0)]),
+    });
 }
 
 pub fn spwan_connection (
@@ -97,15 +106,17 @@ pub fn draw_node(
     query_node: Query<(&NodeId, &NodeName, &Position, &PortInput, &PortOutput)>,
     pointer_position: Res<GlobalPointerPosition>,
     scale_factor: Res<GlobalScaleFactor>,
+    mut focus_point_status: ResMut<FocusPointStatus>,
     mut display: NonSendMut<Display>,
 ) {
     let center_x = DISPLAY_WIDTH as i32 / 2;
     let center_y = DISPLAY_HEIGHT as i32 / 2;
     let node_width = 30;
     let port_spacing = 10;
-    let port_diameter = 6;
+    let port_diameter = 4;
     let node_half_width = node_width / 2;
     let port_half_diameter = port_diameter / 2;
+    let mut is_focus_point_checked = false; 
 
     for (node_id, node_name, position, port_input, port_output) in query_node.iter() {
         let node_input_count = port_input.0.len();
@@ -131,9 +142,12 @@ pub fn draw_node(
         let orig_node_left_x = position.0.0 - node_half_width;
         let orig_node_right_x = position.0.0 + node_half_width;
 
-        if pointer_position.0.0 > orig_node_left_x && pointer_position.0.0 < orig_node_right_x &&
-           pointer_position.0.1 > position.0.1 - node_half_height && pointer_position.0.1 < position.0.1 + node_half_height {
-            println!("{}", node_id.0);
+        if !is_focus_point_checked {
+            if pointer_position.0.0 > orig_node_left_x && pointer_position.0.0 < orig_node_right_x &&
+            pointer_position.0.1 > position.0.1 - node_half_height && pointer_position.0.1 < position.0.1 + node_half_height {
+                *focus_point_status = FocusPointStatus::OnNode(node_id.0);
+                is_focus_point_checked = true;
+            }
         }
 
         // 端口基础位置（原始坐标）
@@ -142,10 +156,15 @@ pub fn draw_node(
         // 绘制端口并检查聚焦点
         for (i, _) in port_input.0.iter().enumerate() {
             let port_upper_y = orig_first_port_upper_y - i as i32 * port_spacing;
-            if pointer_position.0.0 > orig_node_left_x - port_diameter && pointer_position.0.0 < orig_node_left_x &&
-               pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
-                println!("input port {}", i);
+
+            if !is_focus_point_checked {
+                if pointer_position.0.0 > orig_node_left_x - port_diameter && pointer_position.0.0 < orig_node_left_x &&
+                pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
+                    *focus_point_status = FocusPointStatus::OnInputPort(node_id.0, i as u32);
+                    is_focus_point_checked = true;
+                }
             }
+
             // 绘制端口（动态坐标）
             display.draw_circle(
                 scaled_x - half_scaled_width - half_scaled_port_diameter, 
@@ -156,9 +175,13 @@ pub fn draw_node(
 
         for (i, _) in port_output.0.iter().enumerate() {
             let port_upper_y = orig_first_port_upper_y - i as i32 * port_spacing;
-            if pointer_position.0.0 > orig_node_right_x && pointer_position.0.0 < orig_node_right_x + port_diameter &&
-               pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
-                println!("output port {}", i);
+
+            if !is_focus_point_checked {
+                if pointer_position.0.0 > orig_node_right_x && pointer_position.0.0 < orig_node_right_x + port_diameter &&
+                pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
+                    *focus_point_status = FocusPointStatus::OnOutputPort(node_id.0, i as u32);
+                    is_focus_point_checked = true;
+                }
             }
             // 绘制端口（动态坐标）
             display.draw_circle(
@@ -181,7 +204,13 @@ pub fn draw_node(
         // 绘制节点名称
         display.draw_text_center(&node_name.0, scaled_x, scaled_y, NODE_TEXT_STYLE);
     }
+
+    if !is_focus_point_checked{
+        *focus_point_status = FocusPointStatus::OnCanvas;
+    }
+
 }
+
 
 pub fn draw_connection (
     mut display: NonSendMut<Display>,
