@@ -3,36 +3,16 @@ mod resource;
 mod plugins;
 mod platform;
 mod systems;
-mod components;
 
-use std::collections::BTreeMap;
-#[cfg(all(target_os = "linux", target_arch = "arm"))]
-use crate::core::display_arm::Display;
-#[cfg(any(windows, target_os = "macos"))]
-use crate::core::display_mock::*;
-use crate::core::display_trait::*;
-use crate::core::display_style::*;
-use crate::resource::resource_image::*;
-
-use bevy::diagnostic::DiagnosticsPlugin;
-use bevy::input::InputPlugin;
-use bevy::log::LogPlugin;
 use bevy::{app::ScheduleRunnerPlugin, prelude::*, utils::Duration};
-use plugins::plugin_input::PluginInput;
-use resource::resource_coordinate::GlobalPointerPosition;
-use resource::resource_coordinate::GlobalScaleFactor;
-use systems::system_axis::draw_focus_point;
-use systems::system_axis::draw_global_axis;
-use systems::system_axis::update_pointer_coordinate;
-use systems::system_debug;
-use systems::system_debug::debug_info;
-use systems::system_interaction::move_focus_point;
-use systems::system_interaction::zoom_canvas;
+use resource::resource_global::*;
+use systems::system_axis::*;
+use systems::system_debug::*;
+use systems::system_interaction::*;
 use systems::system_node::*;
-use crate::plugins::fps_check::FpsCheck;
-use crate::plugins::plugin_display::PluginDisplay;
-use crate::resource::resource_node_priority::{NodePriorityList, print_node_priority_list};
-use crate::systems::system_tilemap::draw_tile_map;
+use plugins::fps_check::FpsCheck;
+use plugins::plugin_display::PluginDisplay;
+use plugins::plugin_input::PluginInput;
 
 fn main() {
     App::new()

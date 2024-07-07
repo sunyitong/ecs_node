@@ -1,6 +1,5 @@
 use std::cmp;
 use bevy::prelude::*;
-use crate::components::component_node::{NodeInputs, NodeOutputs, NodeTilePosition};
 
 #[cfg(all(target_os = "linux", target_arch = "arm"))]
 use crate::core::display_arm::Display;
@@ -10,7 +9,7 @@ use crate::core::display_mock::*;
 use crate::core::display_style::*;
 use crate::core::display_trait::DisplayDraw;
 use crate::platform::platform_data::*;
-use crate::resource::resource_coordinate::{GlobalPointerPosition, GlobalScaleFactor};
+use crate::resource::resource_global::{GlobalPointerPosition, GlobalScaleFactor};
 
 
 #[derive(Bundle)]

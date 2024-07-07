@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use device_query::{DeviceQuery, DeviceState, Keycode};
 
-use crate::resource::resource_coordinate::{GlobalPointerPosition, GlobalScaleFactor};
+use crate::resource::resource_global::{GlobalPointerPosition, GlobalScaleFactor};
 
 pub fn move_focus_point (
     mut focus_point: ResMut<GlobalPointerPosition>,

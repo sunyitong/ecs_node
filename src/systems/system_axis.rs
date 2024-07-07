@@ -6,7 +6,7 @@ use crate::core::display_mock::*;
 use crate::core::display_style::*;
 use crate::core::display_trait::DisplayDraw;
 use crate::platform::platform_data::*;
-use crate::resource::resource_coordinate::{GlobalPointerPosition, GlobalScaleFactor};
+use crate::resource::resource_global::{GlobalPointerPosition, GlobalScaleFactor};
 
 pub fn draw_global_axis(
     mut display: NonSendMut<Display>,

@@ -5,7 +5,7 @@ use crate::core::display_arm::Display;
 use crate::core::display_mock::*;
 use crate::core::display_style::*;
 use crate::core::display_trait::DisplayDraw;
-use crate::resource::resource_coordinate::GlobalPointerPosition;
+use crate::resource::resource_global::GlobalPointerPosition;
 
 
 pub fn debug_info (
