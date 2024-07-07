@@ -2,7 +2,7 @@ use bevy::prelude::*;
 
 #[cfg(all(target_os = "linux", target_arch = "arm"))]
 use crate::core::display_arm::Display;
-#[cfg(windows)]
+#[cfg(any(windows, target_os = "macos"))]
 use crate::core::display_mock::*;
 use crate::core::display_trait::DisplayUpdate;
 
