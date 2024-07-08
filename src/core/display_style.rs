@@ -37,7 +37,7 @@ pub static NODE_PORT_STYLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new(
     .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::GREEN).build();
 
 pub static NODE_OUTLINE_SYTLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
-    .stroke_color(Rgb888::WHITE).fill_color(Rgb888::new(255, 140, 0)).build();
+    .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::new(255, 140, 0)).build();
 
 // Connection Style
 pub static CONNECTION_LINE_STYLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()

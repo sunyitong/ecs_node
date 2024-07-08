@@ -10,7 +10,7 @@ use crate::core::display_style::*;
 use crate::core::display_trait::DisplayDraw;
 use crate::platform::platform_data::*;
 use crate::resource::resource_global::{GlobalPointerPosition, GlobalScaleFactor};
-use crate::FocusPointStatus;
+use crate::{FocusPointStatus, IsFocusPointLocked};
 
 
 #[derive(Bundle)]
@@ -106,6 +106,7 @@ pub fn draw_node(
     query_node: Query<(&NodeId, &NodeName, &Position, &PortInput, &PortOutput)>,
     pointer_position: Res<GlobalPointerPosition>,
     scale_factor: Res<GlobalScaleFactor>,
+    is_focus_point_locked: Res<IsFocusPointLocked>,
     mut focus_point_status: ResMut<FocusPointStatus>,
     mut display: NonSendMut<Display>,
 ) {
@@ -142,7 +143,7 @@ pub fn draw_node(
         let orig_node_left_x = position.0.0 - node_half_width;
         let orig_node_right_x = position.0.0 + node_half_width;
 
-        if !is_focus_point_checked {
+        if !is_focus_point_checked && !is_focus_point_locked.0 {
             if pointer_position.0.0 > orig_node_left_x && pointer_position.0.0 < orig_node_right_x &&
             pointer_position.0.1 > position.0.1 - node_half_height && pointer_position.0.1 < position.0.1 + node_half_height {
                 *focus_point_status = FocusPointStatus::OnNode(node_id.0);
@@ -205,7 +206,7 @@ pub fn draw_node(
         display.draw_text_center(&node_name.0, scaled_x, scaled_y, NODE_TEXT_STYLE);
     }
 
-    if !is_focus_point_checked{
+    if !is_focus_point_checked && !is_focus_point_locked.0 {
         *focus_point_status = FocusPointStatus::OnCanvas;
     }
 

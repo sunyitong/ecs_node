@@ -12,6 +12,7 @@ pub fn debug_info (
     mut display: NonSendMut<Display>,
     pointer_postion: Res<GlobalPointerPosition>,
     focus_point_status: Res<FocusPointStatus>,
+    is_focus_point_locked: Res<IsFocusPointLocked>,
     fps_info: Res<FpsInfo>,
 ){
     let focus_point_text = format!("Focus Point: ({}, {})" , pointer_postion.0.0, pointer_postion.0.1); 
@@ -22,4 +23,7 @@ pub fn debug_info (
 
     let fps_info_text = format!("FPS: {:.0}, AVG: {:.0}, SMOOTHED: {:.0}" , fps_info.0.0, fps_info.0.1, fps_info.0.2);
     display.draw_text(&fps_info_text, 10, 45, TEXT_STYLE_SMALL);
+
+    display.draw_text(&format!("{:?}", is_focus_point_locked), 10, 60, TEXT_STYLE_SMALL);
+
 }

@@ -15,6 +15,8 @@ pub enum FocusPointStatus {
     OnOutputPort(u32, u32),
 }
 
+#[derive(Resource, Debug)]
+pub struct IsFocusPointLocked (pub bool);
 
 // debug
 #[derive(Resource, Default)]
