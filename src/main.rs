@@ -25,6 +25,7 @@ fn main() {
         .insert_resource(GlobalScaleFactor(4))
         .insert_resource(FocusPointStatus::default())
         .insert_resource(IsFocusPointLocked(false))
+        .insert_resource(TempConnection::default())
         .insert_resource(FpsInfo::default())
         // .insert_resource(NodePriorityList(BTreeMap::new()))
         // .add_systems(Startup, spawn_test_node)

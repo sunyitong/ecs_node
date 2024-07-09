@@ -11,12 +11,21 @@ pub enum FocusPointStatus {
     #[default]
     OnCanvas,
     OnNode(u32),
-    OnInputPort(u32, u32),
-    OnOutputPort(u32, u32),
+    OnInputPort(u32, u32, (i32, i32)),
+    OnOutputPort(u32, u32, (i32, i32)),
 }
 
 #[derive(Resource, Debug)]
 pub struct IsFocusPointLocked (pub bool);
+
+#[derive(Resource, Default, Debug)]
+pub struct TempConnection{
+    pub is_input_port_set: bool,
+    pub is_output_port_set: bool,
+    pub input_port: (u32, u32, (i32, i32)),
+    pub output_port: (u32, u32, (i32, i32)),
+}
+
 
 // debug
 #[derive(Resource, Default)]

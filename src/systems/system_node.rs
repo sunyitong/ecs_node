@@ -45,6 +45,7 @@ struct PortConnection {
     connection_coordinates: ConnectionCoordinates,
 }
 
+
 #[derive(Component)]
 pub struct ConnectionId (pub u32);
 
@@ -161,7 +162,7 @@ pub fn draw_node(
             if !is_focus_point_checked {
                 if pointer_position.0.0 > orig_node_left_x - port_diameter && pointer_position.0.0 < orig_node_left_x &&
                 pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
-                    *focus_point_status = FocusPointStatus::OnInputPort(node_id.0, i as u32);
+                    *focus_point_status = FocusPointStatus::OnInputPort(node_id.0, i as u32, (orig_node_left_x,port_upper_y-port_half_diameter));
                     is_focus_point_checked = true;
                 }
             }
@@ -180,7 +181,7 @@ pub fn draw_node(
             if !is_focus_point_checked {
                 if pointer_position.0.0 > orig_node_right_x && pointer_position.0.0 < orig_node_right_x + port_diameter &&
                 pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
-                    *focus_point_status = FocusPointStatus::OnOutputPort(node_id.0, i as u32);
+                    *focus_point_status = FocusPointStatus::OnOutputPort(node_id.0, i as u32,(orig_node_right_x,port_upper_y-port_half_diameter));
                     is_focus_point_checked = true;
                 }
             }
