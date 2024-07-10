@@ -10,7 +10,7 @@ use crate::core::display_style::*;
 use crate::core::display_trait::DisplayDraw;
 use crate::platform::platform_data::*;
 use crate::resource::resource_global::{GlobalPointerPosition, GlobalScaleFactor};
-use crate::{FocusPointStatus, IsFocusPointLocked};
+use crate::{FocusPointStatus, IsFocusPointLocked, IsTempConnectionSetting, TempConnection};
 
 
 #[derive(Bundle)]
@@ -59,8 +59,8 @@ pub struct Connection {
 
 #[derive(Component)]
 pub struct ConnectionCoordinates {
-    start_coord: (i32, i32),
-    end_coord: (i32, i32),
+    pub start_coord: (i32, i32),
+    pub end_coord: (i32, i32),
 }
 
 
@@ -94,12 +94,28 @@ pub fn spawn_node_add (
 
 pub fn spwan_connection (
     mut commands: Commands,
+    mut temp_connection: ResMut<TempConnection>,
+    mut is_temp_connection_setting: ResMut<IsTempConnectionSetting>,
 ){
-    commands.spawn(PortConnection{
-        connection_id: ConnectionId(1),
-        connection: Connection { from_node: 1, to_node: 2, from_output_port: 0, to_input_port: 0 },
-        connection_coordinates: ConnectionCoordinates { start_coord: (30,30), end_coord: (50,50) },
-    });
+    if temp_connection.is_output_port_set && temp_connection.is_input_port_set {
+        commands.spawn(PortConnection{
+            connection_id: ConnectionId(1),
+            connection: Connection {
+                from_node: temp_connection.output_port.0,
+                to_node: temp_connection.input_port.0,
+                from_output_port: temp_connection.output_port.1, 
+                to_input_port: temp_connection.input_port.1
+            },
+            connection_coordinates: ConnectionCoordinates {
+                start_coord: (temp_connection.output_port.2.0,temp_connection.output_port.2.1),
+                end_coord: (temp_connection.input_port.2.0, temp_connection.input_port.2.1)
+            },
+        });
+    
+        temp_connection.is_output_port_set = false;
+        temp_connection.is_input_port_set = false;
+        is_temp_connection_setting.0 = false;
+    }
 }
 
 
@@ -108,6 +124,7 @@ pub fn draw_node(
     pointer_position: Res<GlobalPointerPosition>,
     scale_factor: Res<GlobalScaleFactor>,
     is_focus_point_locked: Res<IsFocusPointLocked>,
+    is_temp_connection_setting: Res<IsTempConnectionSetting>,
     mut focus_point_status: ResMut<FocusPointStatus>,
     mut display: NonSendMut<Display>,
 ) {
@@ -144,7 +161,7 @@ pub fn draw_node(
         let orig_node_left_x = position.0.0 - node_half_width;
         let orig_node_right_x = position.0.0 + node_half_width;
 
-        if !is_focus_point_checked && !is_focus_point_locked.0 {
+        if !is_focus_point_checked && !is_focus_point_locked.0 && !is_temp_connection_setting.0 {
             if pointer_position.0.0 > orig_node_left_x && pointer_position.0.0 < orig_node_right_x &&
             pointer_position.0.1 > position.0.1 - node_half_height && pointer_position.0.1 < position.0.1 + node_half_height {
                 *focus_point_status = FocusPointStatus::OnNode(node_id.0);
@@ -159,7 +176,7 @@ pub fn draw_node(
         for (i, _) in port_input.0.iter().enumerate() {
             let port_upper_y = orig_first_port_upper_y - i as i32 * port_spacing;
 
-            if !is_focus_point_checked {
+            if !is_focus_point_checked && !is_focus_point_locked.0 {
                 if pointer_position.0.0 > orig_node_left_x - port_diameter && pointer_position.0.0 < orig_node_left_x &&
                 pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
                     *focus_point_status = FocusPointStatus::OnInputPort(node_id.0, i as u32, (orig_node_left_x,port_upper_y-port_half_diameter));
@@ -178,7 +195,7 @@ pub fn draw_node(
         for (i, _) in port_output.0.iter().enumerate() {
             let port_upper_y = orig_first_port_upper_y - i as i32 * port_spacing;
 
-            if !is_focus_point_checked {
+            if !is_focus_point_checked && !is_focus_point_locked.0 {
                 if pointer_position.0.0 > orig_node_right_x && pointer_position.0.0 < orig_node_right_x + port_diameter &&
                 pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
                     *focus_point_status = FocusPointStatus::OnOutputPort(node_id.0, i as u32,(orig_node_right_x,port_upper_y-port_half_diameter));
@@ -236,6 +253,40 @@ pub fn draw_connection (
             scaled_start_y,
             scaled_end_x,
             scaled_end_y,
+            CONNECTION_LINE_STYLE,
+        );
+    }
+}
+
+pub fn draw_temp_connection (
+    temp_connection: Res<TempConnection>,
+    mut display: NonSendMut<Display>,
+    pointer_position: Res<GlobalPointerPosition>,
+    scale_factor: Res<GlobalScaleFactor>,
+){
+    let center_x = DISPLAY_WIDTH as i32 / 2;
+    let center_y = DISPLAY_HEIGHT as i32 / 2;
+
+    if temp_connection.is_input_port_set {
+        let scaled_start_x = center_x + ((temp_connection.input_port.2.0 - pointer_position.0.0) * scale_factor.0 as i32);
+        let scaled_start_y = center_y - ((temp_connection.input_port.2.1 - pointer_position.0.1) * scale_factor.0 as i32);
+
+        display.draw_line(
+            scaled_start_x,
+            scaled_start_y,
+            center_x,
+            center_y,
+            CONNECTION_LINE_STYLE,
+        );
+    } else if temp_connection.is_output_port_set {
+        let scaled_start_x = center_x + ((temp_connection.output_port.2.0 - pointer_position.0.0) * scale_factor.0 as i32);
+        let scaled_start_y = center_y - ((temp_connection.output_port.2.1 - pointer_position.0.1) * scale_factor.0 as i32);
+
+        display.draw_line(
+            scaled_start_x,
+            scaled_start_y,
+            center_x,
+            center_y,
             CONNECTION_LINE_STYLE,
         );
     }

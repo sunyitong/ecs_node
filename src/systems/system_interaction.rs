@@ -1,17 +1,20 @@
 use bevy::prelude::*;
-use device_query::{DeviceQuery, DeviceState, Keycode};
+use device_query::Keycode;
 
 use crate::plugins::plugin_input::KeyState;
 use crate::systems:: system_node::{NodeId, Position};
 use crate::resource::resource_global::*;
+use crate::{Connection, ConnectionCoordinates};
 
 pub fn move_focus_point(
     mut focus_point: ResMut<GlobalPointerPosition>,
     key_state: Res<KeyState>,
     focus_point_status: Res<FocusPointStatus>,
     mut is_focus_point_locked: ResMut<IsFocusPointLocked>,
+    mut is_temp_connection_setting: ResMut<IsTempConnectionSetting>,
     mut temp_connection: ResMut<TempConnection>,
     mut query_node: Query<(&NodeId, &mut Position)>,
+    mut query_connection: Query<(&Connection, &mut ConnectionCoordinates)>,
 ) {
     let move_distance = 1;
     let mut move_x = 0;
@@ -43,6 +46,16 @@ pub fn move_focus_point(
                         position.0.0 += move_x;
                         position.0.1 += move_y;
                         is_focus_point_locked.0 = true;
+
+                        for (connection, mut coordinate) in query_connection.iter_mut() {
+                            if connection.from_node == node_id {
+                                coordinate.start_coord.0 += move_x;
+                                coordinate.start_coord.1 += move_y;
+                            } else if connection.to_node == node_id {
+                                coordinate.end_coord.0 += move_x;
+                                coordinate.end_coord.1 += move_y;
+                            }
+                        }
                     }
                 }
             }
@@ -51,10 +64,15 @@ pub fn move_focus_point(
     } else if key_state.is_key_just_released(Keycode::G) {
         match *focus_point_status {
 
+            FocusPointStatus::OnNode(_node_id) => {
+                is_focus_point_locked.0 = false;
+            }
+
             FocusPointStatus::OnOutputPort(node_id, output_port_index, (port_x, port_y)) => {
                 if !temp_connection.is_output_port_set {
                     temp_connection.output_port = (node_id, output_port_index, (port_x, port_y));
                     temp_connection.is_output_port_set = true;
+                    is_temp_connection_setting.0 = true;
                 }
             }
 
@@ -62,16 +80,13 @@ pub fn move_focus_point(
                 if !temp_connection.is_input_port_set {
                     temp_connection.input_port = (node_id, input_port_index, (port_x, port_y));
                     temp_connection.is_input_port_set = true;
+                    is_temp_connection_setting.0 = true;
                 }
             }
 
             _ => {}
         }
-    } else {
-        is_focus_point_locked.0 = false;
-    }
-
-    println!("{:?}", temp_connection);
+    } 
 }
 
 

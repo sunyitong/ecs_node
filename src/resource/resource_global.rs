@@ -18,6 +18,9 @@ pub enum FocusPointStatus {
 #[derive(Resource, Debug)]
 pub struct IsFocusPointLocked (pub bool);
 
+#[derive(Resource, Debug)]
+pub struct IsTempConnectionSetting (pub bool);
+
 #[derive(Resource, Default, Debug)]
 pub struct TempConnection{
     pub is_input_port_set: bool,
