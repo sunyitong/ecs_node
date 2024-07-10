@@ -8,6 +8,7 @@ use crate::{Connection, ConnectionCoordinates};
 
 pub fn move_focus_point(
     mut focus_point: ResMut<GlobalPointerPosition>,
+    scale_factor: Res<GlobalScaleFactor>,
     key_state: Res<KeyState>,
     focus_point_status: Res<FocusPointStatus>,
     mut is_focus_point_locked: ResMut<IsFocusPointLocked>,
@@ -16,7 +17,7 @@ pub fn move_focus_point(
     mut query_node: Query<(&NodeId, &mut Position)>,
     mut query_connection: Query<(&Connection, &mut ConnectionCoordinates)>,
 ) {
-    let move_distance = 1;
+    let move_distance = 9 - scale_factor.0;
     let mut move_x = 0;
     let mut move_y = 0;
 

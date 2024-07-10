@@ -28,13 +28,10 @@ fn main() {
         .insert_resource(IsTempConnectionSetting(false))
         .insert_resource(TempConnection::default())
         .insert_resource(FpsInfo::default())
-        // .insert_resource(NodePriorityList(BTreeMap::new()))
-        // .add_systems(Startup, spawn_test_node)
         .add_systems(Startup, (spawn_node_add))
-        // .add_systems(Update, (draw_tile_map, update_test_node, draw_test_node).chain())
-        .add_systems(Update, (draw_global_axis, draw_temp_connection, draw_connection, draw_node, draw_focus_point).chain())
         .add_systems(Update, spwan_connection)
         .add_systems(Update, (move_focus_point, zoom_canvas))
+        .add_systems(Update, (draw_global_axis, draw_node, draw_temp_connection, draw_connection, draw_focus_point).chain())
         .add_systems(PostUpdate, debug_info)
         .run();
 }
