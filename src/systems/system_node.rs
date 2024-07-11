@@ -14,11 +14,22 @@ use crate::{FocusPointStatus, IsFocusPointLocked, IsTempConnectionSetting, TempC
 
 pub enum NodeType{
     Add,
+    Multiple,
 }
 
 
 #[derive(Bundle)]
 struct NodeAdd {
+    node_type: Type,
+    node_priority: NodePriority,
+    node_name: NodeName,
+    position: Position,
+    port_input: PortInput,
+    port_output: PortOutput,
+}
+
+#[derive(Bundle)]
+struct NodeMultiple {
     node_type: Type,
     node_priority: NodePriority,
     node_name: NodeName,
@@ -81,7 +92,7 @@ pub fn spawn_node_add (
     let entity_0 = commands.spawn(NodeAdd{
         node_type: Type(NodeType::Add),
         node_priority: NodePriority(1),
-        node_name: NodeName(String::from("ADD")),
+        node_name: NodeName(String::from("+")),
         position: Position((0,0)),
         port_input: PortInput(vec![(1.0), (2.0)]),
         port_output: PortOutput(vec![(3.0)]),
@@ -91,9 +102,9 @@ pub fn spawn_node_add (
 
 
     let entity_1 = commands.spawn(NodeAdd{
-        node_type: Type(NodeType::Add),
+        node_type: Type(NodeType::Multiple),
         node_priority: NodePriority(2),
-        node_name: NodeName(String::from("ADD")),
+        node_name: NodeName(String::from("X")),
         position: Position((50,10)),
         port_input: PortInput(vec![(1.0), (2.0)]),
         port_output: PortOutput(vec![(3.0)]),
@@ -104,7 +115,7 @@ pub fn spawn_node_add (
     let entity_2 = commands.spawn(NodeAdd{
         node_type: Type(NodeType::Add),
         node_priority: NodePriority(3),
-        node_name: NodeName(String::from("ADD")),
+        node_name: NodeName(String::from("+")),
         position: Position((-50,25)),
         port_input: PortInput(vec![(1.0), (2.0)]),
         port_output: PortOutput(vec![(3.0)]),
@@ -117,11 +128,24 @@ pub fn spawn_node_add (
 pub fn spwan_connection (
     mut commands: Commands,
     mut temp_connection: ResMut<TempConnection>,
+    query_connection: Query<(Entity, &Connection)>,
     mut is_temp_connection_setting: ResMut<IsTempConnectionSetting>,
 ){
     // 确保两个端口的实体都已设置并且实体是有效的
     if temp_connection.is_output_port_set && temp_connection.is_input_port_set {
         if let (Some(from_node), Some(to_node)) = (temp_connection.output_port.0, temp_connection.input_port.0) {
+            // 查找是否存在任何连接到目标节点的输入端口的现有连接
+            let existing_connections: Vec<Entity> = query_connection.iter()
+                .filter(|(_, conn)| conn.to_node == to_node && conn.to_input_port == temp_connection.input_port.1)
+                .map(|(entity, _)| entity)
+                .collect();
+
+            // 如果存在，删除这些连接
+            for conn_entity in existing_connections {
+                commands.entity(conn_entity).despawn();
+            }
+
+            // 创建新的连接
             commands.spawn(PortConnection {
                 connection_id: ConnectionId(1),
                 connection: Connection {
@@ -139,12 +163,13 @@ pub fn spwan_connection (
             // 重置临时连接状态
             temp_connection.is_output_port_set = false;
             temp_connection.is_input_port_set = false;
-            temp_connection.input_port = (None,0,(0,0));
-            temp_connection.output_port = (None,0,(0,0));
+            temp_connection.input_port = (None, 0, (0, 0));
+            temp_connection.output_port = (None, 0, (0, 0));
             is_temp_connection_setting.0 = false;
         }
     }
 }
+
 
 
 pub fn draw_node(
@@ -333,36 +358,6 @@ pub fn draw_temp_connection (
 }
 
 
-// pub fn update_node(
-//     mut commands: Commands,
-//     mut query_node_priority: Query<(Entity, &Type, &NodePriority, &NodeId, &mut PortInput, &mut PortOutput)>,
-//     query_connections: Query<(&Connection, &ConnectionCoordinates)>,
-// ) {
-//     // 收集所有节点并根据优先级排序
-//     let mut nodes: Vec<_> = query_node_priority.iter().collect();
-//     nodes.sort_by_key(|&(_, _, priority, _, _, _)| priority.0);
-
-//     // 遍历每个节点
-//     // 直接处理查询结果，避免先收集到向量中
-//     for (entity, node_type, priority, node_id, mut port_input, mut port_output) in query_node_priority.iter_mut() {
-//         let inputs = query_connections.iter().filter(|(connection, _)| connection.to_node == node_id.0).collect::<Vec<_>>();
-        
-//         for (connection, _) in inputs {
-//             if let Ok((_, _, _, _, mut source_port_input, source_port_output)) = query_node_priority.get_mut(connection.from_node) {
-//                 port_input.0[connection.to_input_port as usize] = source_port_output.0[connection.from_output_port as usize];
-//             }
-//         }
-
-//         match node_type.0 {
-//             NodeType::Add => {
-//                 let sum: f32 = port_input.0.iter().sum();
-//                 port_output.0.push(sum);
-//                 println!("Node {:?} with priority {:?} computed sum: {:?}", entity, priority.0, sum);
-//             }
-//         }
-//     }
-// }
-
 pub fn update_node_input(
     query_node_priority: Query<(Entity, &Type, &NodePriority)>,
     mut query_node_port_output: Query<&mut PortOutput>,
@@ -389,6 +384,16 @@ pub fn update_node_input(
             NodeType::Add => {
                 if let Ok(port_input) = query_node_port_input.get(*entity){
                     let sum: f32 = port_input.0.iter().sum();
+                    if let Ok(mut port_output) = query_node_port_output.get_mut(*entity){
+                        for i in 0..port_output.0.len(){
+                            port_output.0[i] = sum;
+                        }
+                    }
+                }
+            }
+            NodeType::Multiple => {
+                if let Ok(port_input) = query_node_port_input.get(*entity){
+                    let sum: f32 = port_input.0.iter().fold(1.0, |acc, &x| acc * x);
                     if let Ok(mut port_output) = query_node_port_output.get_mut(*entity){
                         for i in 0..port_output.0.len(){
                             port_output.0[i] = sum;

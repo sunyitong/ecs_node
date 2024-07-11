@@ -1,5 +1,7 @@
 use embedded_graphics::{
-    mono_font::{ascii::{FONT_6X10, FONT_9X18}, MonoTextStyle}, pixelcolor::WebColors, primitives::PrimitiveStyleBuilder
+    mono_font::{ascii::{FONT_6X10, FONT_6X13_BOLD, FONT_9X18, FONT_10X20}, MonoTextStyle}, 
+    pixelcolor::WebColors, 
+    primitives::PrimitiveStyleBuilder
 };
 use embedded_graphics::pixelcolor::Rgb888;
 use embedded_graphics::prelude::RgbColor;
@@ -31,9 +33,9 @@ pub static FOCUS_POINT: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
 
 
 // Node Style
-pub static NODE_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_6X10, Rgb888::WHITE);
+pub static NODE_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_6X13_BOLD, Rgb888::WHITE);
 
-pub static NODE_PORT_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_9X18, Rgb888::CSS_DARK_ORANGE);
+pub static NODE_PORT_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_10X20, Rgb888::CSS_DARK_ORANGE);
 
 pub static NODE_PORT_STYLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
     .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::BLACK).build();
