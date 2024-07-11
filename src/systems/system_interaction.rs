@@ -17,7 +17,7 @@ pub fn move_focus_point(
     mut query_node: Query<(&NodeId, &mut Position)>,
     mut query_connection: Query<(&Connection, &mut ConnectionCoordinates)>,
 ) {
-    let move_distance = 9 - scale_factor.0;
+    let move_distance = 1;
     let mut move_x = 0;
     let mut move_y = 0;
 
@@ -71,7 +71,7 @@ pub fn move_focus_point(
 
             FocusPointStatus::OnOutputPort(node_id, output_port_index, (port_x, port_y)) => {
                 if !temp_connection.is_output_port_set {
-                    temp_connection.output_port = (node_id, output_port_index, (port_x, port_y));
+                    temp_connection.output_port = (Some(node_id), output_port_index, (port_x, port_y));
                     temp_connection.is_output_port_set = true;
                     is_temp_connection_setting.0 = true;
                 }
@@ -79,7 +79,7 @@ pub fn move_focus_point(
 
             FocusPointStatus::OnInputPort(node_id, input_port_index, (port_x, port_y)) => {
                 if !temp_connection.is_input_port_set {
-                    temp_connection.input_port = (node_id, input_port_index, (port_x, port_y));
+                    temp_connection.input_port = (Some(node_id), input_port_index, (port_x, port_y));
                     temp_connection.is_input_port_set = true;
                     is_temp_connection_setting.0 = true;
                 }

@@ -1,4 +1,4 @@
-use bevy::prelude::*;
+use bevy::{prelude::*, utils::Entry};
 
 #[derive(Resource)]
 pub struct GlobalPointerPosition (pub (i32, i32));
@@ -10,9 +10,9 @@ pub struct GlobalScaleFactor (pub i32);
 pub enum FocusPointStatus {
     #[default]
     OnCanvas,
-    OnNode(u32),
-    OnInputPort(u32, u32, (i32, i32)),
-    OnOutputPort(u32, u32, (i32, i32)),
+    OnNode(Entity),
+    OnInputPort(Entity, u32, (i32, i32)),
+    OnOutputPort(Entity, u32, (i32, i32)),
 }
 
 #[derive(Resource, Debug)]
@@ -21,12 +21,12 @@ pub struct IsFocusPointLocked (pub bool);
 #[derive(Resource, Debug)]
 pub struct IsTempConnectionSetting (pub bool);
 
-#[derive(Resource, Default, Debug)]
+#[derive(Resource,Default, Debug)]
 pub struct TempConnection{
     pub is_input_port_set: bool,
     pub is_output_port_set: bool,
-    pub input_port: (u32, u32, (i32, i32)),
-    pub output_port: (u32, u32, (i32, i32)),
+    pub input_port: (Option<Entity>, u32, (i32, i32)),
+    pub output_port: (Option<Entity>, u32, (i32, i32)),
 }
 
 

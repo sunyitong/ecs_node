@@ -12,10 +12,15 @@ use crate::platform::platform_data::*;
 use crate::resource::resource_global::{GlobalPointerPosition, GlobalScaleFactor};
 use crate::{FocusPointStatus, IsFocusPointLocked, IsTempConnectionSetting, TempConnection};
 
+pub enum NodeType{
+    Add,
+}
+
 
 #[derive(Bundle)]
 struct NodeAdd {
-    node_id: NodeId,
+    node_type: Type,
+    node_priority: NodePriority,
     node_name: NodeName,
     position: Position,
     port_input: PortInput,
@@ -23,7 +28,13 @@ struct NodeAdd {
 }
 
 #[derive(Component)]
-pub struct NodeId (pub u32);
+pub struct NodeId (pub Entity);
+
+#[derive(Component)]
+pub struct Type (pub NodeType);
+
+#[derive(Component)]
+pub struct NodePriority (pub u32);
 
 #[derive(Component)]
 pub struct NodeName (pub String);
@@ -51,8 +62,8 @@ pub struct ConnectionId (pub u32);
 
 #[derive(Component)]
 pub struct Connection {
-   pub from_node: u32,
-   pub to_node: u32,
+   pub from_node: Entity,
+   pub to_node: Entity,
    pub from_output_port: u32,
    pub to_input_port: u32,
 }
@@ -67,29 +78,40 @@ pub struct ConnectionCoordinates {
 pub fn spawn_node_add (
     mut commands: Commands,
 ){
-    commands.spawn(NodeAdd{
-        node_id: NodeId(1),
+    let entity_0 = commands.spawn(NodeAdd{
+        node_type: Type(NodeType::Add),
+        node_priority: NodePriority(1),
         node_name: NodeName(String::from("ADD")),
         position: Position((0,0)),
         port_input: PortInput(vec![(0.0), (0.0)]),
         port_output: PortOutput(vec![(0.0)]),
-    });
+    }).id();
 
-    commands.spawn(NodeAdd{
-        node_id: NodeId(2),
+    commands.entity(entity_0).insert(NodeId(entity_0));
+
+
+    let entity_1 = commands.spawn(NodeAdd{
+        node_type: Type(NodeType::Add),
+        node_priority: NodePriority(2),
         node_name: NodeName(String::from("ADD")),
         position: Position((50,10)),
         port_input: PortInput(vec![(0.0), (0.0)]),
         port_output: PortOutput(vec![(0.0)]),
-    });
+    }).id();
 
-    commands.spawn(NodeAdd{
-        node_id: NodeId(3),
+    commands.entity(entity_1).insert(NodeId(entity_1));
+
+    let entity_2 = commands.spawn(NodeAdd{
+        node_type: Type(NodeType::Add),
+        node_priority: NodePriority(3),
         node_name: NodeName(String::from("ADD")),
         position: Position((-50,25)),
         port_input: PortInput(vec![(0.0), (0.0)]),
         port_output: PortOutput(vec![(0.0)]),
-    });
+    }).id();
+
+    commands.entity(entity_2).insert(NodeId(entity_2));
+
 }
 
 pub fn spwan_connection (
@@ -97,24 +119,30 @@ pub fn spwan_connection (
     mut temp_connection: ResMut<TempConnection>,
     mut is_temp_connection_setting: ResMut<IsTempConnectionSetting>,
 ){
+    // 确保两个端口的实体都已设置并且实体是有效的
     if temp_connection.is_output_port_set && temp_connection.is_input_port_set {
-        commands.spawn(PortConnection{
-            connection_id: ConnectionId(1),
-            connection: Connection {
-                from_node: temp_connection.output_port.0,
-                to_node: temp_connection.input_port.0,
-                from_output_port: temp_connection.output_port.1, 
-                to_input_port: temp_connection.input_port.1
-            },
-            connection_coordinates: ConnectionCoordinates {
-                start_coord: (temp_connection.output_port.2.0,temp_connection.output_port.2.1),
-                end_coord: (temp_connection.input_port.2.0, temp_connection.input_port.2.1)
-            },
-        });
-    
-        temp_connection.is_output_port_set = false;
-        temp_connection.is_input_port_set = false;
-        is_temp_connection_setting.0 = false;
+        if let (Some(from_node), Some(to_node)) = (temp_connection.output_port.0, temp_connection.input_port.0) {
+            commands.spawn(PortConnection {
+                connection_id: ConnectionId(1),
+                connection: Connection {
+                    from_node: from_node,
+                    to_node: to_node,
+                    from_output_port: temp_connection.output_port.1,
+                    to_input_port: temp_connection.input_port.1
+                },
+                connection_coordinates: ConnectionCoordinates {
+                    start_coord: temp_connection.output_port.2,
+                    end_coord: temp_connection.input_port.2
+                },
+            });
+
+            // 重置临时连接状态
+            temp_connection.is_output_port_set = false;
+            temp_connection.is_input_port_set = false;
+            temp_connection.input_port = (None,0,(0,0));
+            temp_connection.output_port = (None,0,(0,0));
+            is_temp_connection_setting.0 = false;
+        }
     }
 }
 
@@ -291,3 +319,34 @@ pub fn draw_temp_connection (
         );
     }
 }
+
+
+// pub fn update_node(
+//     mut commands: Commands,
+//     mut query_node_priority: Query<(Entity, &Type, &NodePriority, &NodeId, &mut PortInput, &mut PortOutput)>,
+//     query_connections: Query<(&Connection, &ConnectionCoordinates)>,
+// ) {
+//     // 收集所有节点并根据优先级排序
+//     let mut nodes: Vec<_> = query_node_priority.iter().collect();
+//     nodes.sort_by_key(|&(_, _, priority, _, _, _)| priority.0);
+
+//     // 遍历每个节点
+//     // 直接处理查询结果，避免先收集到向量中
+//     for (entity, node_type, priority, node_id, mut port_input, mut port_output) in query_node_priority.iter_mut() {
+//         let inputs = query_connections.iter().filter(|(connection, _)| connection.to_node == node_id.0).collect::<Vec<_>>();
+        
+//         for (connection, _) in inputs {
+//             if let Ok((_, _, _, _, mut source_port_input, source_port_output)) = query_node_priority.get_mut(connection.from_node) {
+//                 port_input.0[connection.to_input_port as usize] = source_port_output.0[connection.from_output_port as usize];
+//             }
+//         }
+
+//         match node_type.0 {
+//             NodeType::Add => {
+//                 let sum: f32 = port_input.0.iter().sum();
+//                 port_output.0.push(sum);
+//                 println!("Node {:?} with priority {:?} computed sum: {:?}", entity, priority.0, sum);
+//             }
+//         }
+//     }
+// }
