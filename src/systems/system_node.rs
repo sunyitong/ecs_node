@@ -83,8 +83,8 @@ pub fn spawn_node_add (
         node_priority: NodePriority(1),
         node_name: NodeName(String::from("ADD")),
         position: Position((0,0)),
-        port_input: PortInput(vec![(0.0), (0.0)]),
-        port_output: PortOutput(vec![(0.0)]),
+        port_input: PortInput(vec![(1.0), (2.0)]),
+        port_output: PortOutput(vec![(3.0)]),
     }).id();
 
     commands.entity(entity_0).insert(NodeId(entity_0));
@@ -95,8 +95,8 @@ pub fn spawn_node_add (
         node_priority: NodePriority(2),
         node_name: NodeName(String::from("ADD")),
         position: Position((50,10)),
-        port_input: PortInput(vec![(0.0), (0.0)]),
-        port_output: PortOutput(vec![(0.0)]),
+        port_input: PortInput(vec![(1.0), (2.0)]),
+        port_output: PortOutput(vec![(3.0)]),
     }).id();
 
     commands.entity(entity_1).insert(NodeId(entity_1));
@@ -106,8 +106,8 @@ pub fn spawn_node_add (
         node_priority: NodePriority(3),
         node_name: NodeName(String::from("ADD")),
         position: Position((-50,25)),
-        port_input: PortInput(vec![(0.0), (0.0)]),
-        port_output: PortOutput(vec![(0.0)]),
+        port_input: PortInput(vec![(1.0), (2.0)]),
+        port_output: PortOutput(vec![(3.0)]),
     }).id();
 
     commands.entity(entity_2).insert(NodeId(entity_2));
@@ -218,6 +218,12 @@ pub fn draw_node(
                 base_port_y + i as i32 * port_spacing * scale_factor.0 - half_scaled_port_diameter,
                 (port_diameter * scale_factor.0) as u32, 
                 NODE_PORT_STYLE);
+
+            display.draw_text(
+                &format!("{}", port_input.0[i]), 
+                scaled_x - half_scaled_width - half_scaled_port_diameter*3,
+                base_port_y + i as i32 * port_spacing * scale_factor.0, 
+                NODE_PORT_TEXT_STYLE);
         }
 
         for (i, _) in port_output.0.iter().enumerate() {
@@ -236,6 +242,12 @@ pub fn draw_node(
                 base_port_y + i as i32 * port_spacing * scale_factor.0 - half_scaled_port_diameter,
                 (port_diameter * scale_factor.0) as u32, 
                 NODE_PORT_STYLE);
+
+            display.draw_text(
+                &format!("{}", port_output.0[i]), 
+                scaled_x + half_scaled_width + half_scaled_port_diameter*2,
+                base_port_y + i as i32 * port_spacing * scale_factor.0,
+                NODE_PORT_TEXT_STYLE);
         }
 
         // 绘制节点主体
@@ -350,3 +362,40 @@ pub fn draw_temp_connection (
 //         }
 //     }
 // }
+
+pub fn update_node_input(
+    query_node_priority: Query<(Entity, &Type, &NodePriority)>,
+    mut query_node_port_output: Query<&mut PortOutput>,
+    mut query_node_port_input: Query<&mut PortInput>,
+    query_connections: Query<&Connection>,
+) {
+
+    let mut nodes: Vec<_> = query_node_priority.iter().collect();
+    nodes.sort_by_key(|&(_,_,priority)| priority.0);
+
+    for (entity, node_type, _) in nodes.iter() {
+
+        let inputs = query_connections.iter().filter(|connection| connection.to_node == *entity).collect::<Vec<_>>();
+
+        for connection in inputs {
+            if let Ok(source_port_output) = query_node_port_output.get(connection.from_node) {
+                if let Ok(mut update_port_input) = query_node_port_input.get_mut(*entity) {
+                    update_port_input.0[connection.to_input_port as usize] = source_port_output.0[connection.from_output_port as usize];
+                }
+            }
+        }
+
+        match node_type.0 {
+            NodeType::Add => {
+                if let Ok(port_input) = query_node_port_input.get(*entity){
+                    let sum: f32 = port_input.0.iter().sum();
+                    if let Ok(mut port_output) = query_node_port_output.get_mut(*entity){
+                        for i in 0..port_output.0.len(){
+                            port_output.0[i] = sum;
+                        }
+                    }
+                }
+            }
+        }
+    }
+}

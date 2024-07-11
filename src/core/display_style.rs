@@ -33,11 +33,13 @@ pub static FOCUS_POINT: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
 // Node Style
 pub static NODE_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_6X10, Rgb888::WHITE);
 
+pub static NODE_PORT_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_9X18, Rgb888::CSS_DARK_ORANGE);
+
 pub static NODE_PORT_STYLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
-    .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::GREEN).build();
+    .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::BLACK).build();
 
 pub static NODE_OUTLINE_SYTLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
-    .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::new(255, 140, 0)).build();
+    .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::BLACK).build();
 
 // Connection Style
 pub static CONNECTION_LINE_STYLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
