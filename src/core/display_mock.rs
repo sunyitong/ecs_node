@@ -13,6 +13,8 @@ use embedded_graphics::{
 use tinybmp::Bmp;
 use crate::core::display_trait::{DisplayDraw, DisplayUpdate};
 
+use super::display_style::BACKGROUND_COLOR;
+
 pub struct Display {
     width: usize,
     height: usize,
@@ -67,11 +69,11 @@ impl Display {
 
 impl DisplayUpdate for Display{
     fn clean(&mut self) {
-        self.buffer.fill(0);
+        self.buffer.fill(BACKGROUND_COLOR);
     }
 
     fn start(&mut self) {
-        self.buffer.fill(0);
+        self.buffer.fill(BACKGROUND_COLOR);
     }
 
     fn update(&mut self) {

@@ -32,7 +32,7 @@ fn main() {
         .add_systems(Update, spwan_connection)
         .add_systems(Update, (move_focus_point, zoom_canvas))
         .add_systems(Update, update_node_input)
-        .add_systems(Update, (draw_global_axis, draw_temp_connection, draw_connection, draw_node, draw_focus_point).chain())
+        .add_systems(Update, (draw_temp_connection, draw_connection, draw_node, draw_focus_point).chain())
         .add_systems(PostUpdate, debug_info)
         .run();
 }

@@ -15,11 +15,13 @@ use crate::{FocusPointStatus, IsFocusPointLocked, IsTempConnectionSetting, TempC
 pub enum NodeType{
     Add,
     Multiple,
+    SingleFloatProvider,
+    SingleFloatReader,
 }
 
 
 #[derive(Bundle)]
-struct NodeAdd {
+struct NodeBasic {
     node_type: Type,
     node_priority: NodePriority,
     node_name: NodeName,
@@ -28,15 +30,6 @@ struct NodeAdd {
     port_output: PortOutput,
 }
 
-#[derive(Bundle)]
-struct NodeMultiple {
-    node_type: Type,
-    node_priority: NodePriority,
-    node_name: NodeName,
-    position: Position,
-    port_input: PortInput,
-    port_output: PortOutput,
-}
 
 #[derive(Component)]
 pub struct NodeId (pub Entity);
@@ -54,22 +47,17 @@ pub struct NodeName (pub String);
 pub struct Position (pub (i32,i32));
 
 #[derive(Component)]
-pub struct PortInput (pub Vec<f32>);
+pub struct PortInput (pub Option<Vec<f32>>);
 
 #[derive(Component)]
-pub struct PortOutput (pub Vec<f32>);
+pub struct PortOutput (pub Option<Vec<f32>>);
 
 
 #[derive(Bundle)]
 struct PortConnection {
-    connection_id: ConnectionId,
     connection: Connection,
     connection_coordinates: ConnectionCoordinates,
 }
-
-
-#[derive(Component)]
-pub struct ConnectionId (pub u32);
 
 #[derive(Component)]
 pub struct Connection {
@@ -89,39 +77,83 @@ pub struct ConnectionCoordinates {
 pub fn spawn_node_add (
     mut commands: Commands,
 ){
-    let entity_0 = commands.spawn(NodeAdd{
+    let entity_0 = commands.spawn(NodeBasic{
         node_type: Type(NodeType::Add),
         node_priority: NodePriority(1),
-        node_name: NodeName(String::from("+")),
+        node_name: NodeName(String::from("Add")),
         position: Position((0,0)),
-        port_input: PortInput(vec![(1.0), (2.0)]),
-        port_output: PortOutput(vec![(3.0)]),
+        port_input: PortInput(Some(vec![0.0, 0.0, 0.0])),
+        port_output: PortOutput(Some(vec![0.0])),
     }).id();
 
     commands.entity(entity_0).insert(NodeId(entity_0));
 
 
-    let entity_1 = commands.spawn(NodeAdd{
+    let entity_1 = commands.spawn(NodeBasic{
         node_type: Type(NodeType::Multiple),
         node_priority: NodePriority(2),
-        node_name: NodeName(String::from("X")),
+        node_name: NodeName(String::from("Multiply")),
         position: Position((50,10)),
-        port_input: PortInput(vec![(1.0), (2.0)]),
-        port_output: PortOutput(vec![(3.0)]),
+        port_input: PortInput(Some(vec![0.0, 0.0])),
+        port_output: PortOutput(Some(vec![0.0])),
     }).id();
 
     commands.entity(entity_1).insert(NodeId(entity_1));
 
-    let entity_2 = commands.spawn(NodeAdd{
-        node_type: Type(NodeType::Add),
+    let entity_2 = commands.spawn(NodeBasic{
+        node_type: Type(NodeType::SingleFloatProvider),
         node_priority: NodePriority(3),
-        node_name: NodeName(String::from("+")),
+        node_name: NodeName(String::from("Float")),
         position: Position((-50,25)),
-        port_input: PortInput(vec![(1.0), (2.0)]),
-        port_output: PortOutput(vec![(3.0)]),
+        port_input: PortInput(None),
+        port_output: PortOutput(Some(vec![(0.5368)])),
     }).id();
 
     commands.entity(entity_2).insert(NodeId(entity_2));
+
+    let entity_3 = commands.spawn(NodeBasic{
+        node_type: Type(NodeType::SingleFloatReader),
+        node_priority: NodePriority(4),
+        node_name: NodeName(String::from("SingleFloatReader")),
+        position: Position((-60,-25)),
+        port_input: PortInput(Some(vec![(0.0)])),
+        port_output: PortOutput(None),
+    }).id();
+
+    commands.entity(entity_3).insert(NodeId(entity_3));
+
+    let entity_4 = commands.spawn(NodeBasic{
+        node_type: Type(NodeType::SingleFloatReader),
+        node_priority: NodePriority(4),
+        node_name: NodeName(String::from("SingleFloatReader")),
+        position: Position((-60,-20)),
+        port_input: PortInput(Some(vec![(0.0)])),
+        port_output: PortOutput(None),
+    }).id();
+
+    commands.entity(entity_4).insert(NodeId(entity_4));
+
+    let entity_5 = commands.spawn(NodeBasic{
+        node_type: Type(NodeType::SingleFloatProvider),
+        node_priority: NodePriority(3),
+        node_name: NodeName(String::from("Float")),
+        position: Position((-5,25)),
+        port_input: PortInput(None),
+        port_output: PortOutput(Some(vec![(0.357)])),
+    }).id();
+
+    commands.entity(entity_5).insert(NodeId(entity_5));
+
+    let entity_6 = commands.spawn(NodeBasic{
+        node_type: Type(NodeType::SingleFloatProvider),
+        node_priority: NodePriority(3),
+        node_name: NodeName(String::from("Float")),
+        position: Position((-15,60)),
+        port_input: PortInput(None),
+        port_output: PortOutput(Some(vec![(0.25)])),
+    }).id();
+
+    commands.entity(entity_6).insert(NodeId(entity_6));
 
 }
 
@@ -147,7 +179,6 @@ pub fn spwan_connection (
 
             // 创建新的连接
             commands.spawn(PortConnection {
-                connection_id: ConnectionId(1),
                 connection: Connection {
                     from_node: from_node,
                     to_node: to_node,
@@ -173,7 +204,7 @@ pub fn spwan_connection (
 
 
 pub fn draw_node(
-    query_node: Query<(&NodeId, &NodeName, &Position, &PortInput, &PortOutput)>,
+    query_node: Query<(&NodeId, &Type, &NodeName, &Position, &PortInput, &PortOutput)>,
     pointer_position: Res<GlobalPointerPosition>,
     scale_factor: Res<GlobalScaleFactor>,
     is_focus_point_locked: Res<IsFocusPointLocked>,
@@ -184,15 +215,15 @@ pub fn draw_node(
     let center_x = DISPLAY_WIDTH as i32 / 2;
     let center_y = DISPLAY_HEIGHT as i32 / 2;
     let node_width = 30;
-    let port_spacing = 10;
+    let port_spacing = 8;
     let port_diameter = 4;
     let node_half_width = node_width / 2;
     let port_half_diameter = port_diameter / 2;
     let mut is_focus_point_checked = false; 
 
-    for (node_id, node_name, position, port_input, port_output) in query_node.iter() {
-        let node_input_count = port_input.0.len();
-        let node_output_count = port_output.0.len();
+    for (node_id, node_type, node_name, position, port_input, port_output) in query_node.iter() {
+        let node_input_count = port_input.0.as_ref().map_or(0, |v| v.len());
+        let node_output_count = port_output.0.as_ref().map_or(0, |v| v.len());
         let node_height = cmp::max(node_input_count, node_output_count) as i32 * port_spacing;
         let node_half_height = node_height / 2;
         let half_scaled_port_diameter = port_diameter * scale_factor.0 / 2;
@@ -222,71 +253,104 @@ pub fn draw_node(
             }
         }
 
-        // 端口基础位置（原始坐标）
-        let orig_first_port_upper_y = position.0.1 + node_half_height - port_spacing / 2 + port_half_diameter;
-
-        // 绘制端口并检查聚焦点
-        for (i, _) in port_input.0.iter().enumerate() {
-            let port_upper_y = orig_first_port_upper_y - i as i32 * port_spacing;
-
-            if !is_focus_point_checked && !is_focus_point_locked.0 {
-                if pointer_position.0.0 > orig_node_left_x - port_diameter && pointer_position.0.0 < orig_node_left_x &&
-                pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
-                    *focus_point_status = FocusPointStatus::OnInputPort(node_id.0, i as u32, (orig_node_left_x,port_upper_y-port_half_diameter));
-                    is_focus_point_checked = true;
-                }
-            }
-
-            // 绘制端口（动态坐标）
-            display.draw_circle(
-                scaled_x - half_scaled_width - half_scaled_port_diameter, 
-                base_port_y + i as i32 * port_spacing * scale_factor.0 - half_scaled_port_diameter,
-                (port_diameter * scale_factor.0) as u32, 
-                NODE_PORT_STYLE);
-
-            display.draw_text(
-                &format!("{}", port_input.0[i]), 
-                scaled_x - half_scaled_width - half_scaled_port_diameter*3,
-                base_port_y + i as i32 * port_spacing * scale_factor.0, 
-                NODE_PORT_TEXT_STYLE);
-        }
-
-        for (i, _) in port_output.0.iter().enumerate() {
-            let port_upper_y = orig_first_port_upper_y - i as i32 * port_spacing;
-
-            if !is_focus_point_checked && !is_focus_point_locked.0 {
-                if pointer_position.0.0 > orig_node_right_x && pointer_position.0.0 < orig_node_right_x + port_diameter &&
-                pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
-                    *focus_point_status = FocusPointStatus::OnOutputPort(node_id.0, i as u32,(orig_node_right_x,port_upper_y-port_half_diameter));
-                    is_focus_point_checked = true;
-                }
-            }
-            // 绘制端口（动态坐标）
-            display.draw_circle(
-                scaled_x + half_scaled_width - half_scaled_port_diameter, 
-                base_port_y + i as i32 * port_spacing * scale_factor.0 - half_scaled_port_diameter,
-                (port_diameter * scale_factor.0) as u32, 
-                NODE_PORT_STYLE);
-
-            display.draw_text(
-                &format!("{}", port_output.0[i]), 
-                scaled_x + half_scaled_width + half_scaled_port_diameter*2,
-                base_port_y + i as i32 * port_spacing * scale_factor.0,
-                NODE_PORT_TEXT_STYLE);
-        }
-
         // 绘制节点主体
-        display.draw_rectangle_round(
+        display.draw_rectangle(
             scaled_x - half_scaled_width,
             scaled_y - half_scaled_height,
             scaled_width as u32,
             scaled_height as u32,
-            2 * scale_factor.0 as u32,
             NODE_OUTLINE_SYTLE,
         );
 
-        // 绘制节点名称
-        display.draw_text_center(&node_name.0, scaled_x, scaled_y, NODE_TEXT_STYLE);
+        match node_type.0 {
+            NodeType::SingleFloatProvider => {
+                if let Some(vec) = &port_output.0 {
+                    display.draw_text_center(&format!("{}", vec[0]), scaled_x, scaled_y+4, NODE_TEXT_STYLE);
+                }
+            },
+            NodeType::SingleFloatReader => {
+                if let Some(vec) = &port_input.0 {
+                    display.draw_text_center(&format!("{}", vec[0]), scaled_x, scaled_y+4, NODE_TEXT_STYLE);
+                }
+            },
+            _ => {
+                // 绘制节点名称
+                display.draw_text_center(&node_name.0, scaled_x, scaled_y+4, NODE_TEXT_STYLE);
+            },
+        }
+
+        // 端口基础位置（原始坐标）
+        let orig_first_port_upper_y = position.0.1 + node_half_height - port_spacing / 2 + port_half_diameter;
+
+        // 绘制端口并检查聚焦点
+        if let Some(ref vec) = port_input.0 {
+            for (i, _) in vec.iter().enumerate() {
+                let port_upper_y = orig_first_port_upper_y - i as i32 * port_spacing;
+    
+                if !is_focus_point_checked && !is_focus_point_locked.0 {
+                    if pointer_position.0.0 > orig_node_left_x - port_diameter && pointer_position.0.0 < orig_node_left_x &&
+                    pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
+                        *focus_point_status = FocusPointStatus::OnInputPort(node_id.0, i as u32, (orig_node_left_x,port_upper_y-port_half_diameter));
+                        is_focus_point_checked = true;
+                    }
+                }
+    
+                // 绘制端口（动态坐标）
+                // display.draw_circle(
+                //     scaled_x - half_scaled_width - half_scaled_port_diameter, 
+                //     base_port_y + i as i32 * port_spacing * scale_factor.0 - half_scaled_port_diameter,
+                //     (port_diameter * scale_factor.0) as u32, 
+                //     NODE_PORT_STYLE);
+
+                display.draw_rectangle(
+                    scaled_x - half_scaled_width,
+                    base_port_y + i as i32 * port_spacing * scale_factor.0 - half_scaled_port_diameter,
+                    1 * scale_factor.0 as u32,
+                    4 * scale_factor.0 as u32,
+                    NODE_PORT_STYLE,
+                )
+    
+                // display.draw_text(
+                //     &format!("{}", vec[i]), 
+                //     scaled_x - half_scaled_width - half_scaled_port_diameter*3,
+                //     base_port_y + i as i32 * port_spacing * scale_factor.0, 
+                //     NODE_PORT_TEXT_STYLE);
+            }
+        }
+
+        if let Some(ref vec) = port_output.0 {
+            for (i, _) in vec.iter().enumerate() {
+                let port_upper_y = orig_first_port_upper_y - i as i32 * port_spacing;
+
+                if !is_focus_point_checked && !is_focus_point_locked.0 {
+                    if pointer_position.0.0 > orig_node_right_x && pointer_position.0.0 < orig_node_right_x + port_diameter &&
+                    pointer_position.0.1 < port_upper_y && pointer_position.0.1 > port_upper_y - port_diameter {
+                        *focus_point_status = FocusPointStatus::OnOutputPort(node_id.0, i as u32,(orig_node_right_x,port_upper_y-port_half_diameter));
+                        is_focus_point_checked = true;
+                    }
+                }
+                // 绘制端口（动态坐标）
+                // display.draw_circle(
+                //     scaled_x + half_scaled_width - half_scaled_port_diameter, 
+                //     base_port_y + i as i32 * port_spacing * scale_factor.0 - half_scaled_port_diameter,
+                //     (port_diameter * scale_factor.0) as u32, 
+                //     NODE_PORT_STYLE);
+
+                display.draw_rectangle(
+                    scaled_x + half_scaled_width - 1 * scale_factor.0,
+                    base_port_y + i as i32 * port_spacing * scale_factor.0 - half_scaled_port_diameter,
+                    1 * scale_factor.0 as u32,
+                    4 * scale_factor.0 as u32,
+                    NODE_PORT_STYLE,
+                )
+
+                // display.draw_text(
+                //     &format!("{}", vec[i]), 
+                //     scaled_x + half_scaled_width + half_scaled_port_diameter*2,
+                //     base_port_y + i as i32 * port_spacing * scale_factor.0,
+                //     NODE_PORT_TEXT_STYLE);
+            }
+        }
     }
 
     if !is_focus_point_checked && !is_focus_point_locked.0 {
@@ -375,32 +439,53 @@ pub fn update_node_input(
         for connection in inputs {
             if let Ok(source_port_output) = query_node_port_output.get(connection.from_node) {
                 if let Ok(mut update_port_input) = query_node_port_input.get_mut(*entity) {
-                    update_port_input.0[connection.to_input_port as usize] = source_port_output.0[connection.from_output_port as usize];
+                    if let Some(ref mut p_i) = update_port_input.0 {
+                        if let Some(ref p_o) = source_port_output.0 {
+                            p_i[connection.to_input_port as usize] = p_o[connection.from_output_port as usize];
+                        }
+                    }
                 }
             }
         }
 
         match node_type.0 {
             NodeType::Add => {
-                if let Ok(port_input) = query_node_port_input.get(*entity){
-                    let sum: f32 = port_input.0.iter().sum();
-                    if let Ok(mut port_output) = query_node_port_output.get_mut(*entity){
-                        for i in 0..port_output.0.len(){
-                            port_output.0[i] = sum;
+                if let Ok(port_input) = query_node_port_input.get(*entity) {
+                    if let Some(ref vec) = port_input.0 {
+                        let sum: f32 = vec.iter().sum();  // 只有当 vec 是 Some 时才执行 sum
+                        if let Ok(mut port_output) = query_node_port_output.get_mut(*entity) {
+                            if let Some(ref mut output_vec) = port_output.0 {
+                                for val in output_vec.iter_mut() {
+                                    *val = sum;
+                                }
+                            }
                         }
                     }
                 }
-            }
+            },
+        
             NodeType::Multiple => {
-                if let Ok(port_input) = query_node_port_input.get(*entity){
-                    let sum: f32 = port_input.0.iter().fold(1.0, |acc, &x| acc * x);
-                    if let Ok(mut port_output) = query_node_port_output.get_mut(*entity){
-                        for i in 0..port_output.0.len(){
-                            port_output.0[i] = sum;
+                if let Ok(port_input) = query_node_port_input.get(*entity) {
+                    if let Some(ref vec) = port_input.0 {
+                        let product: f32 = vec.iter().fold(1.0, |acc, &x| acc * x);  // 只有当 vec 是 Some 时才执行 fold
+                        if let Ok(mut port_output) = query_node_port_output.get_mut(*entity) {
+                            if let Some(ref mut output_vec) = port_output.0 {
+                                for val in output_vec.iter_mut() {
+                                    *val = product;
+                                }
+                            }
                         }
                     }
                 }
-            }
-        }
+            },
+        
+            NodeType::SingleFloatProvider => {
+                // 如果 NodeType 是 SingleFloatProvider, 逻辑可以在这里定义
+            },
+
+            NodeType::SingleFloatReader => {
+
+            },
+        }        
     }
 }

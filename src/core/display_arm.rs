@@ -55,11 +55,11 @@ impl Display {
 
 impl DisplayUpdate for Display {
     fn clean(&mut self) {
-        self.buffer.fill(0);
+        self.buffer.fill(BACKGROUND_COLOR);
     }
 
     fn start(&mut self) {
-        self.buffer.fill(0);
+        self.buffer.fill(BACKGROUND_COLOR);
     }
 
     fn update(&mut self) {

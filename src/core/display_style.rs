@@ -32,19 +32,23 @@ pub static FOCUS_POINT: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
     .stroke_color(Rgb888::WHITE).stroke_width(1).build();
 
 
-// Node Style
-pub static NODE_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_6X13_BOLD, Rgb888::WHITE);
 
-pub static NODE_PORT_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_10X20, Rgb888::CSS_DARK_ORANGE);
+// Background Color
+pub static BACKGROUND_COLOR: u8 = 25;
+
+// Node Style
+pub static NODE_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_9X18, Rgb888::WHITE);
+
+pub static NODE_PORT_TEXT_STYLE: MonoTextStyle<Rgb888> = MonoTextStyle::new(&FONT_9X18, Rgb888::CSS_DARK_ORANGE);
 
 pub static NODE_PORT_STYLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
-    .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::BLACK).build();
+    .fill_color(Rgb888::new(255, 140, 0)).build();
 
 pub static NODE_OUTLINE_SYTLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
-    .stroke_color(Rgb888::WHITE).stroke_width(1).fill_color(Rgb888::BLACK).build();
+    .fill_color(Rgb888::new(50, 50, 50)).build();
 
 // Connection Style
 pub static CONNECTION_LINE_STYLE: PrimitiveStyle<Rgb888> = PrimitiveStyleBuilder::new()
-    .stroke_color(Rgb888::WHITE).stroke_width(1).build();
+    .stroke_color(Rgb888::new(255, 150, 30)).stroke_width(1).build();
 
 
